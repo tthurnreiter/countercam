@@ -12,5 +12,5 @@ Possible future work:
 
 - Replace Frigate NVR software with custom processing and detectors.
 - Replace Raspberry Pi with more powerful hardware
-- Extend Raspberry Pi with USB AI accelerator like coral.ai
+- Extend Raspberry Pi with USB AI accelerator like coral.ai (sold out globally atm)
 - Add Grafana for nicer graphs
