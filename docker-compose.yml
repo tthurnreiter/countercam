@@ -1,0 +1,70 @@
+version: "3.3"
+services:
+  adapter:
+    container_name: frigate-adapter
+    build: adapter
+    restart: unless-stopped
+    depends_on:
+      - mqtt
+      - db
+    environment:
+      MQTT_HOST: frigate-mqtt
+      MQTT_PORT: 1883
+      MQTT_TOPIC: frigate/events
+      DB_HOST: frigate-db
+      DB_PORT: 8086
+      DB_TOKEN: 1NgeIFWRM9kH3ua5m08VX3KF6bBUaPucFtmh-tOm2xedRcVDf8hOJLrT9KxLLsgGge4S220BTOAP8pajHZBNJw==
+      DB_ORG: org
+      DB_BUCKET: traffic
+  db:
+    container_name: frigate-db
+    image: influxdb:latest
+    restart: unless-stopped
+    ports:
+      - 8086:8086
+    volumes:
+      - ./influx/storage:/var/lib/influxdb2
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin123
+      DOCKER_INFLUXDB_INIT_ORG: org
+      DOCKER_INFLUXDB_INIT_BUCKET: traffic
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: 1NgeIFWRM9kH3ua5m08VX3KF6bBUaPucFtmh-tOm2xedRcVDf8hOJLrT9KxLLsgGge4S220BTOAP8pajHZBNJw==
+  mqtt:
+    container_name: frigate-mqtt
+    image: eclipse-mosquitto
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/:/mosquitto/:rw
+    ports:
+      # TODO remove for prod?
+      - 18830:1883
+      - 9001:9001
+  frigate:
+    container_name: frigate
+    restart: unless-stopped
+    depends_on:
+      - mqtt
+    privileged: true # this may not be necessary for all setups
+    restart: unless-stopped
+    image: blakeblackshear/frigate:stable-aarch64
+    shm_size: "128mb" # update for your cameras based on calculation above
+    privileged: true
+#    devices:
+#      - /dev/bus/usb:/dev/bus/usb # passes the USB Coral, needs to be modified for other versions
+#      - /dev/apex_0:/dev/apex_0 # passes a PCIe Coral, follow driver instructions here https://coral.ai/docs/m2/get-started/#2a-on-linux
+#      - /dev/dri/renderD128 # for intel hwaccel, needs to be updated for your hardware
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./frigate/config:/config:ro
+      - ./frigate/storage:/media/frigate
+#      - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
+#        target: /tmp/cache
+#        tmpfs:
+#          size: 1000000000
+    ports:
+      - "5000:5000"
+      - "1935:1935" # RTMP feeds
+    environment:
+      FRIGATE_RTSP_PASSWORD: "password"

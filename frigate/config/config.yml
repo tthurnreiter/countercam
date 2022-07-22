@@ -1,0 +1,85 @@
+mqtt:
+  host: frigate-mqtt
+  port: 1883
+  #host: 192.168.31.25
+  #user: mqtt
+  #password: mqtt123!a
+
+detectors:
+  cpu1:
+    type: cpu
+    num_threads: 4
+
+cameras:
+  camera_1:
+    ffmpeg:
+      inputs:
+        - path: rtsp://admin:123456@192.168.31.145:8554/Streaming/Channels/102
+          roles:
+            - record
+            - detect
+        #- path: rtsp://admin:123456@192.168.31.145:8554/Streaming/Channels/101 
+        #  roles:
+        #    - record
+        #    - detect
+    detect:
+      width: 640
+      height: 360
+      fps: 4
+      max_disappeared: 1 #frames
+      stationary:
+        threshold: 150 #frames
+    motion:
+      threshold: 30
+      contour_area: 15
+      mask:
+      #  - 195,40,195,15,15,15,15,40
+    mqtt: 
+      enabled: false #do not publish jpg snapshot via mqtt
+    objects:
+      track:
+        - person
+        - car
+        - bicycle
+        - motorcycle
+        - bus
+        - cat
+        - dog
+      filters:
+        person:
+          threshold: 0.7
+          min_score: 0.5
+        car:
+          threshold: 0.5
+          min_score: 0.3
+        bicycle:
+          threshold: 0.5
+          min_score: 0.3
+        motorcycle:
+          threshold: 0.7
+          min_score: 0.5
+        bus:
+          threshold: 0.5
+          min_score: 0.3
+        cat:
+          threshold: 0.5
+        dog:
+          threshold: 0.5
+    record:
+      enabled: False
+      retain: 
+        days: 1
+        mode: active_objects
+      events:
+        pre_capture: 2
+        post_capture: 0
+        retain:
+          mode: active_objects
+          default: 1 #days
+    rtmp:
+      enabled: False
+    snapshots:
+      enabled: True
+      bounding_box: true
+      retain:
+        default: 1
